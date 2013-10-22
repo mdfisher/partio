@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -67,7 +67,7 @@ readers()
         data["pts"]=readPTS;
 		data["xyz"]=readXYZ;
 		data["pcd"]=readPCD;
-		data["icecache"]=readICECACHE;
+		//data["icecache"]=readICECACHE;
         data["ptf"]=readPTC;
         data["itbl"]=readBGEO;
         data["atbl"]=readBGEO;
@@ -93,7 +93,7 @@ writers()
         data["prt"]=writePRT;
         data["bin"]=writeBIN;
 		data["pcd"]=writePCD;
-		data["icecache"]=writeICECACHE;
+		//data["icecache"]=writeICECACHE;
         data["ptf"]=writePTC;
         data["itbl"]=writeBGEO;
         data["atbl"]=writeBGEO;

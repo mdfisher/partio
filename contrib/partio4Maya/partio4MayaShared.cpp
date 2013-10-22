@@ -1,6 +1,6 @@
 /* partio4Maya  3/12/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Export
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -213,7 +213,7 @@ MStringArray partio4Maya::partioGetBaseFileName(MString inFileName)
 
 void partio4Maya::updateFileName (MString cacheFile, MString cacheDir,
                                   bool cacheStatic, int cacheOffset,
-                                  short cacheFormat, int integerTime,
+                                  short cacheFormat, int integerTime, int byFrame,
                                   int &cachePadding, MString &formatExt,
                                   MString &outputFramePath, MString &outputRenderPath
                                  )
@@ -239,7 +239,7 @@ void partio4Maya::updateFileName (MString cacheFile, MString cacheDir,
 ///////////////////////////////////////////////
 ///  output path  as normal
 
-    cacheFrame =  integerTime + cacheOffset;
+	cacheFrame =  (integerTime  + cacheOffset) * byFrame;
 
     MString formatString =  "%s%s%s%0";
     // special case for PDCs and maya nCache files because of the funky naming convention  TODO: support substepped/retiming  caches
@@ -326,11 +326,11 @@ void partio4Maya::buildSupportedExtensionList(std::map<short,MString> &formatExt
     formatExtMap[9] = "pts";
     formatExtMap[10] = "xyz";
     formatExtMap[11] = "pcd";
-	formatExtMap[12] = "icecache";
+	//formatExtMap[12] = "icecache";
     if (write)
     {
-        formatExtMap[13] = "rib";
-        formatExtMap[14] = "ass";
+        formatExtMap[12] = "rib";
+        formatExtMap[13] = "ass";
     }
 }
 

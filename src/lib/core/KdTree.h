@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -34,7 +34,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 */
 #ifndef KdTree_h
 #define KdTree_h
+
+#ifdef WIN32
+	#include <numeric>
+#else
 #include <ext/numeric>
+#endif
+
+#include <string.h>
+#include <vector>
+#include <float.h>
+#include <algorithm>
+#include <cassert>
 
 namespace Partio
 {
@@ -290,7 +301,13 @@ void KdTree<k>::setPoints(const float* p, int n)
 
     // assign sequential ids
     _ids.resize(n);
-    __gnu_cxx::iota(_ids.begin(), _ids.end(), 0);
+
+#ifdef WIN32
+    iota(_ids.begin(), _ids.end(), 0);
+#else
+	__gnu_cxx::iota(_ids.begin(), _ids.end(), 0);
+#endif
+
 //    _ids.reserve(n);
 //    while ((int)_ids.size() < n) _ids.push_back(_ids.size());
     _sorted = 0;

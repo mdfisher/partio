@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -43,6 +43,7 @@ class ParticleHeaders:public ParticlesDataMutable
 public:
     ParticleHeaders();
     void release() const;
+	ParticlesDataMutable* reset() const;
 protected:
     virtual ~ParticleHeaders();
 

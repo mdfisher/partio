@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -67,6 +67,15 @@ release() const
 {
     freeCached(const_cast<ParticlesSimple*>(this));
 }
+
+ParticlesDataMutable* ParticlesSimple::reset() const
+{
+	//std::cout << "simple reset" << std::endl;
+	freeCached(const_cast<ParticlesSimple*>(this));
+	ParticlesDataMutable* newParticlesData;
+	return newParticlesData;
+}
+
 
 int ParticlesSimple::
 numParticles() const

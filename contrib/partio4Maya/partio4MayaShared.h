@@ -1,6 +1,6 @@
 /* partio4Maya  3/12/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Export
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -80,7 +80,7 @@ public:
     static MStringArray partioGetBaseFileName(MString inFileName);
     static void 	updateFileName (MString cacheFile, MString cacheDir,
                                  bool cacheStatic, int cacheOffset,
-                                 short cacheFormat, int integerTime,
+                                 short cacheFormat, int integerTime, int byFrame,
                                  int &cachePadding, MString &formatExt,
                                  MString &outputFramePath, MString &outputRenderPath);
 

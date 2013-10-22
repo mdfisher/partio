@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -103,6 +103,8 @@ public:
 
     typedef ParticleIterator<true> const_iterator;
 
+	virtual ParticlesData* reset() const = 0;
+
     //! Fill the user supplied values array with data corresponding to the given
     //! list of particles. Specify whether or not your indices are sorted.
     //! note if T is void, then type checking is disabled.
@@ -185,6 +187,7 @@ public:
 
     typedef ParticleIterator<false> iterator;
 
+	virtual ParticlesDataMutable* reset() const = 0;
     //! Get a pointer to the data corresponding to the given particleIndex and
     //! attribute given by the attribute handle.
     template<class T> inline T* dataWrite(const ParticleAttribute& attribute,

@@ -1,6 +1,6 @@
 /*
 PARTIO SOFTWARE
-Copyright 2010 Disney Enterprises, Inc. All rights reserved
+Copyright 2013 Disney Enterprises, Inc. All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -55,6 +55,8 @@ public:
     using ParticlesData::const_iterator;
 
     void release() const;
+
+	ParticlesDataMutable* reset() const;
 
     ParticlesSimpleInterleave();
 
