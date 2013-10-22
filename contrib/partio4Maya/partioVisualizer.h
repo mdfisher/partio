@@ -1,6 +1,6 @@
 /* partio4Maya  3/12/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Visualizer
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -146,6 +146,7 @@ public:
     MCallbackId partioVisualizerReferenceCallback;
 
     static MObject  time;
+	static MObject  aByFrame;
     static MObject  aSize;         // The size of the logo
     static MObject  aDrawSkip;
     static MObject  aFlipYZ;
@@ -177,6 +178,7 @@ public:
     float 					multiplier;
     bool 					cacheChanged;
     partioVizReaderCache  	pvCache;
+	int drawError;
 
 
 private:
@@ -197,7 +199,6 @@ private:
     bool mFlipped;
     bool  frameChanged;
     MStringArray attributeList;
-    bool drawError;
 
 
 protected:

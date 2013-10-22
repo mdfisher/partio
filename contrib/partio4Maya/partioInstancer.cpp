@@ -1,6 +1,6 @@
 /* partio4Maya  5/02/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Instancer
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -54,21 +54,22 @@ scale (vectorArray) *
 shear (vectorArray)
 visibility (doubleArray)
 objectIndex (doubleArray) *
-rotationType (doubleArray)
+rotationType (doubleArray) *
 rotation (vectorArray) *
-aimDirection (vectorArray)
-aimPosition (vectorArray)
-aimAxis (vectorArray)
-aimUpAxis (vectorArray)
-aimWorldUp (vectorArray)
+aimDirection (vectorArray) *
+aimPosition (vectorArray) *
+aimAxis (vectorArray) *
+aimUpAxis (vectorArray) *
+aimWorldUp (vectorArray) *
 age (doubleArray)
-id (doubleArray)
+id (doubleArray) *
 */
 
 MTypeId partioInstancer::id( ID_PARTIOINSTANCER );
 
 /// ATTRS
 MObject partioInstancer::time;
+MObject partioInstancer::aByFrame;
 MObject partioInstancer::aSize;         // The size of the logo
 MObject partioInstancer::aFlipYZ;
 MObject partioInstancer::aDrawStyle;
@@ -109,7 +110,6 @@ MObject partioInstancer::aLastAimPositionFrom;
 MObject partioInstancer::aIndexFrom;
 
 /// not implemented yet
-//	MObject partioInstancer::aAimPositionFrom;
 //	MObject partioInstancer::aShaderIndexFrom;
 //	MObject partioInstancer::aInMeshInstances;
 //	MObject partioInstancer::aOutMesh;
@@ -154,7 +154,8 @@ partioInstancer::partioInstancer()
         mLastIndexFromIndex(-1),
         cacheChanged(false),
         multiplier(1.0),
-        canMotionBlur(false)
+        canMotionBlur(false),
+        drawError(0)
 
 {
     pvCache.particles = NULL;
@@ -240,6 +241,15 @@ MStatus partioInstancer::initialize()
 
     time = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0, &stat );
     uAttr.setKeyable( true );
+
+	aByFrame = nAttr.create( "byFrame", "byf", MFnNumericData::kInt ,1);
+    nAttr.setKeyable( true );
+    nAttr.setReadable( true );
+    nAttr.setWritable( true );
+    nAttr.setConnectable( true );
+    nAttr.setStorable( true );
+    nAttr.setMin(1);
+    nAttr.setMax(100);
 
     aSize = uAttr.create( "iconSize", "isz", MFnUnitAttribute::kDistance );
     uAttr.setDefault( 0.25 );
@@ -417,6 +427,7 @@ MStatus partioInstancer::initialize()
 
     addAttribute ( aInstanceData );
 
+	addAttribute ( aByFrame );
 	addAttribute ( time );
 
 // attribute affects
@@ -457,6 +468,8 @@ MStatus partioInstancer::initialize()
 	attributeAffects ( aInstanceData, aUpdateCache );
     attributeAffects (time, aUpdateCache);
     attributeAffects (time, aInstanceData);
+	attributeAffects (aByFrame, aUpdateCache);
+	attributeAffects (aByFrame, aInstanceData);
 
 
     return MS::kSuccess;
@@ -489,11 +502,12 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 	int aimWorldUpFromIndex			= block.inputValue( aAimWorldUpFrom ).asInt();
     int indexFromIndex 				= block.inputValue( aIndexFrom ).asInt();
 
-
+	drawError = 0;
     bool cacheActive = block.inputValue(aCacheActive).asBool();
 
     if (!cacheActive)
     {
+		drawError = 2;
         return ( MS::kSuccess );
     }
 
@@ -512,6 +526,7 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 
         if (cacheDir  == "" || cacheFile == "" )
         {
+			drawError = 1;
             // too much noise!
             //MGlobal::displayError("PartioEmitter->Error: Please specify cache file!");
             return ( MS::kFailure );
@@ -522,6 +537,7 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
         short cacheFormat	= block.inputValue( aCacheFormat ).asShort();
         bool forceReload 	= block.inputValue( aForceReload ).asBool();
         MTime inputTime		= block.inputValue( time ).asTime();
+		int byFrame 		= block.inputValue( aByFrame ).asInt();
         bool flipYZ 		= block.inputValue( aFlipYZ ).asBool();
         MString renderCachePath = block.inputValue( aRenderCachePath ).asString();
         bool computeMotionBlur =block.inputValue( aComputeVeloPos ).asBool();
@@ -546,7 +562,7 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 
         partio4Maya::updateFileName( cacheFile,  cacheDir,
                                      cacheStatic,  cacheOffset,
-                                     cacheFormat,  integerTime,
+                                     cacheFormat,  integerTime, byFrame,
                                      cachePadding, formatExt,
                                      newCacheFile, renderCacheFile
                                    );
@@ -576,10 +592,18 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 
         if (!partio4Maya::partioCacheExists(newCacheFile.asChar()))
         {
-            pvCache.particles=0; // resets the particles
+			ParticlesDataMutable* newParticles;
+			newParticles = pvCache.particles;
+			pvCache.particles=NULL; // resets the pointer
+
+			if (newParticles != NULL)
+			{
+				newParticles->release(); // frees the mem
+			}
             pvCache.bbox.clear();
 			pvCache.instanceData.clear();
 			mLastFileLoaded = "";
+			drawError = 1;
         }
 
         if ( newCacheFile != "" && partio4Maya::partioCacheExists(newCacheFile.asChar()) && (newCacheFile != mLastFileLoaded || forceReload) )
@@ -587,8 +611,15 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
             cacheChanged = true;
             mFlipped = false;
             MGlobal::displayWarning(MString("PartioInstancer->Loading: " + newCacheFile));
-            pvCache.particles=0; // resets the particles
 
+			ParticlesDataMutable* newParticles;
+			newParticles = pvCache.particles;
+			pvCache.particles=NULL; // resets the pointer
+
+			if (newParticles != NULL)
+			{
+				newParticles->release(); // frees the mem
+			}
             pvCache.particles=read(newCacheFile.asChar());
 
             mLastFileLoaded = newCacheFile;
@@ -810,13 +841,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 				for (int i=0;i<pvCache.particles->numParticles();i++)
 				{
 					// SCALE
-                    if (pvCache.scaleAttr.type == FLOAT )  // single float value for scale
+                    if (pvCache.scaleAttr.type == Partio::FLOAT )  // single float value for scale
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.scaleAttr,i);
 						float scale = attrVal[0];
 						if (canMotionBlur)
 						{
-							if (pvCache.lastScaleAttr.type == FLOAT )
+							if (pvCache.lastScaleAttr.type == Partio::FLOAT )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastScaleAttr,i);
 								scale += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -824,14 +855,14 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						}
 						scaleArray.append(MVector(scale,scale,scale));
                     }
-                    else if (pvCache.scaleAttr.type == VECTOR )   // we have a 4 float attribute ?
+                    else if (pvCache.scaleAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 
 						const float * attrVal = pvCache.particles->data<float>(pvCache.scaleAttr,i);
 						MVector scale = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						if (canMotionBlur)
 						{
-							if (pvCache.lastScaleAttr.type == VECTOR )
+							if (pvCache.lastScaleAttr.type == Partio::VECTOR )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastScaleAttr,i);
 								scale.x += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -842,13 +873,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						scaleArray.append(scale);
                     }
 					// ROTATION
-					if (pvCache.rotationAttr.type == FLOAT )  // single float value for rotation
+					if (pvCache.rotationAttr.type == Partio::FLOAT )  // single float value for rotation
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.rotationAttr,i);
 						float rot = attrVal[0];
 						if (canMotionBlur && lastRotFromIndex >= 0)
 						{
-							if (pvCache.lastRotationAttr.type == FLOAT )
+							if (pvCache.lastRotationAttr.type == Partio::FLOAT )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastRotationAttr,i);
 								rot += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -856,13 +887,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						}
 						rotationArray.append(MVector(rot,rot,rot));
 					}
-					else if (pvCache.rotationAttr.type == VECTOR )   // we have a 4 float attribute ?
+					else if (pvCache.rotationAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.rotationAttr,i);
 						MVector rot = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						if (canMotionBlur && lastRotFromIndex >= 0)
 						{
-							if (pvCache.lastRotationAttr.type == VECTOR )
+							if (pvCache.lastRotationAttr.type == Partio::VECTOR )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastRotationAttr,i);
 								rot.x += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -874,13 +905,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
                     }
 
 					// AIM DIRECTION
-					if (pvCache.aimDirAttr.type == FLOAT )  // single float value for aimDirection
+					if (pvCache.aimDirAttr.type == Partio::FLOAT )  // single float value for aimDirection
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimDirAttr,i);
 						float aimDir = attrVal[0];
 						if (canMotionBlur)
 						{
-							if (pvCache.lastAimDirAttr.type == FLOAT )
+							if (pvCache.lastAimDirAttr.type == Partio::FLOAT )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastAimDirAttr,i);
 								aimDir += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -888,13 +919,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						}
 						aimDirectionArray.append(MVector(aimDir,aimDir,aimDir));
                     }
-                    else if (pvCache.aimDirAttr.type == VECTOR )   // we have a 4 float attribute ?
+                    else if (pvCache.aimDirAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimDirAttr,i);
 						MVector aimDir = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						if (canMotionBlur)
 						{
-							if (pvCache.lastAimDirAttr.type == VECTOR )
+							if (pvCache.lastAimDirAttr.type == Partio::VECTOR )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastAimDirAttr,i);
 								aimDir.x += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -907,13 +938,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						aimDirectionArray.append(aimDir);
                     }
                     // AIM POSITION
-					if (pvCache.aimPosAttr.type == FLOAT )  // single float value for aimDirection
+					if (pvCache.aimPosAttr.type == Partio::FLOAT )  // single float value for aimDirection
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimPosAttr,i);
 						float aimPos = attrVal[0];
 						if (canMotionBlur)
 						{
-							if (pvCache.lastAimPosAttr.type == FLOAT )
+							if (pvCache.lastAimPosAttr.type == Partio::FLOAT )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastAimPosAttr,i);
 								aimPos += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -921,13 +952,13 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						}
 						aimPositionArray.append(MVector(aimPos,aimPos,aimPos));
                     }
-                    else if (pvCache.aimPosAttr.type == VECTOR )   // we have a 4 float attribute ?
+                    else if (pvCache.aimPosAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimPosAttr,i);
 						MVector aimPos = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						if (canMotionBlur)
 						{
-							if (pvCache.lastAimPosAttr.type == VECTOR )
+							if (pvCache.lastAimPosAttr.type == Partio::VECTOR )
 							{
 								const float * lastAttrVal = pvCache.particles->data<float>(pvCache.lastAimPosAttr,i);
 								aimPos.x += (attrVal[0] - lastAttrVal[0])*deltaTime;
@@ -938,46 +969,46 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 						aimPositionArray.append(aimPos);
                     }
                     // AIM Axis
-					if (pvCache.aimAxisAttr.type == FLOAT )  // single float value for aimDirection
+					if (pvCache.aimAxisAttr.type == Partio::FLOAT )  // single float value for aimDirection
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimAxisAttr,i);
 						float aimAxis = attrVal[0];
 						aimAxisArray.append(MVector(aimAxis,aimAxis,aimAxis));
                     }
-                    else if (pvCache.aimAxisAttr.type == VECTOR )   // we have a 4 float attribute ?
+                    else if (pvCache.aimAxisAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimAxisAttr,i);
 						MVector aimAxis = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						aimAxisArray.append(aimAxis);
                     }
                     // AIM Up Axis
-					if (pvCache.aimUpAttr.type == FLOAT )  // single float value for aimDirection
+					if (pvCache.aimUpAttr.type == Partio::FLOAT )  // single float value for aimDirection
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimUpAttr,i);
 						float aimUp = attrVal[0];
 						aimUpAxisArray.append(MVector(aimUp,aimUp,aimUp));
                     }
-                    else if (pvCache.aimUpAttr.type == VECTOR )   // we have a 4 float attribute ?
+                    else if (pvCache.aimUpAttr.type == Partio::VECTOR )   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimUpAttr,i);
 						MVector aimUp = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						aimUpAxisArray.append(aimUp);
                     }
                     // World Up Axis
-					if (pvCache.aimWorldUpAttr.type == FLOAT)  // single float value for aimDirection
+					if (pvCache.aimWorldUpAttr.type == Partio::FLOAT)  // single float value for aimDirection
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimWorldUpAttr,i);
 						float worldUp = attrVal[0];
 						aimWorldUpArray.append(MVector(worldUp,worldUp,worldUp));
                     }
-                    else if (pvCache.aimWorldUpAttr.type == VECTOR)   // we have a 4 float attribute ?
+                    else if (pvCache.aimWorldUpAttr.type == Partio::VECTOR)   // we have a 4 float attribute ?
                     {
 						const float * attrVal = pvCache.particles->data<float>(pvCache.aimWorldUpAttr,i);
 						MVector worldUp = MVector(attrVal[0],attrVal[1],attrVal[2]);
 						aimWorldUpArray.append(worldUp);
                     }
 					// INDEX
-                    if (pvCache.indexAttr.type == FLOAT || pvCache.indexAttr.type == INT)  // single float value for index
+                    if (pvCache.indexAttr.type == Partio::FLOAT || pvCache.indexAttr.type == Partio::INT)  // single float value for index
 					{
 						if (pvCache.indexAttr.type == Partio::FLOAT)
 						{
@@ -990,7 +1021,7 @@ MStatus partioInstancer::compute( const MPlug& plug, MDataBlock& block )
 							indexArray.append((double)attrVal[0]);
 						}
 					}
-					else if (pvCache.indexAttr.type == VECTOR)   // we have a 3or4 float attribute
+					else if (pvCache.indexAttr.type == Partio::VECTOR)   // we have a 3or4 float attribute
 					{
 						const float * attrVal = pvCache.particles->data<float>(pvCache.indexAttr,i);
 						indexArray.append((double)(int)attrVal[0]);
@@ -1243,6 +1274,15 @@ void partioInstancerUI::draw( const MDrawRequest& request, M3dView& view ) const
     {
         drawBoundingBox();
     }
+
+	if (shapeNode->drawError == 1)
+	{
+		glColor3f(.75f,0.0f,0.0f);
+	}
+	else if (shapeNode->drawError == 2)
+	{
+		glColor3f(0.0f,0.0f,0.0f);
+	}
 
     partio4Maya::drawPartioLogo(shapeNode->multiplier);
 
