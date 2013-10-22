@@ -1,5 +1,5 @@
 # PARTIO SOFTWARE
-# Copyright 2010 Disney Enterprises, Inc. All rights reserved
+# Copyright 2013 Disney Enterprises, Inc. All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -33,7 +33,6 @@
 
 foreach(item makecircle makeline jsontest)
     ADD_EXECUTABLE(${item} "${item}.cpp")
-	SET( PARTIO_LIBRARIES glut z partio )
     TARGET_LINK_LIBRARIES(${item} ${PARTIO_LIBRARIES})
-    INSTALL(TARGETS ${item} DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+    INSTALL(TARGETS ${item} DESTINATION ${EXECUTABLE_INSTALL_PATH})
 endforeach(item)

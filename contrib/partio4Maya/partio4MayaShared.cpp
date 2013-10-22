@@ -1,6 +1,6 @@
 /* partio4Maya  3/12/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Export
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -326,11 +326,11 @@ void partio4Maya::buildSupportedExtensionList(std::map<short,MString> &formatExt
     formatExtMap[9] = "pts";
     formatExtMap[10] = "xyz";
     formatExtMap[11] = "pcd";
-	formatExtMap[12] = "icecache";
+	//formatExtMap[12] = "icecache";
     if (write)
     {
-        formatExtMap[13] = "rib";
-        formatExtMap[14] = "ass";
+        formatExtMap[12] = "rib";
+        formatExtMap[13] = "ass";
     }
 }
 

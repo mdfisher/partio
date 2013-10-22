@@ -1,6 +1,6 @@
 /* partio4Maya  3/12/2012, John Cassella  http://luma-pictures.com and  http://redpawfx.com
 PARTIO Export
-Copyright 2012 (c)  All rights reserved
+Copyright 2013 (c)  All rights reserved
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -48,7 +48,7 @@ MStatus initializePlugin ( MObject obj )
     MGlobal::executeCommand("source partioUtils.mel");
 
     MStatus status;
-    MFnPlugin plugin ( obj, "RedpawFX,Luma Pictures,WDAS", "0.9.5b", "Any" );
+    MFnPlugin plugin ( obj, "RedpawFX,Luma Pictures,WDAS", "0.9.7", "Any" );
 
     status = plugin.registerShape( "partioVisualizer", partioVisualizer::id,
                                    &partioVisualizer::creator,

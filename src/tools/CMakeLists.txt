@@ -1,5 +1,5 @@
 # PARTIO SOFTWARE
-# Copyright 2010 Disney Enterprises, Inc. All rights reserved
+# Copyright 2013 Disney Enterprises, Inc. All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -33,13 +33,13 @@
 
 include_directories(
    ${CMAKE_SOURCE_DIR}/src/lib
-   ${GLUT_INCLUDE_DIR}
+   ${GLUT_INCLUDE_PATH}
 )
 
 IF(GLUT_FOUND AND OPENGL_FOUND)
     ADD_EXECUTABLE(partview partview.cpp)
-    target_link_libraries(partview ${PARTIO_LIBRARIES} ${GLUT_LIBRARY} ${OPENGL_LIBRARY})
-    install(TARGETS  partview DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+    target_link_libraries(partview ${PARTIO_LIBRARIES} ${OPENGL_LIBRARY})
+    install(TARGETS  partview DESTINATION ${EXECUTABLE_INSTALL_PATH})
 ENDIF(GLUT_FOUND AND OPENGL_FOUND)
 
 ADD_EXECUTABLE(partinfo partinfo.cpp)
@@ -51,5 +51,5 @@ target_link_libraries(partconv ${PARTIO_LIBRARIES})
 ADD_EXECUTABLE(partattr partattr.cpp)
 target_link_libraries(partattr ${PARTIO_LIBRARIES})
 
-INSTALL(TARGETS partattr partconv partinfo DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+INSTALL(TARGETS partattr partconv partinfo DESTINATION ${EXECUTABLE_INSTALL_PATH})
 
