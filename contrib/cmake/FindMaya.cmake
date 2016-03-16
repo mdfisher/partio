@@ -140,6 +140,8 @@ foreach(version ${_maya_TEST_VERSIONS})
     endif()
 endforeach(version)
 
+set(MAYA_LOCATION "C:\\Program Files\\Autodesk\\Maya2016")
+
 # search for maya executable within the MAYA_LOCATION and PATH env vars and test paths
 find_program(MAYA_EXECUTABLE maya
     PATHS $ENV{MAYA_LOCATION} ${MAYA_LOCATION} ${_maya_TEST_PATHS}
@@ -189,6 +191,9 @@ elseif(${MAYA_VERSION} STREQUAL "2014")
     set(MAYA_QT_VERSION_SHORT CACHE STRING "4.8")
     set(MAYA_QT_VERSION_LONG  CACHE STRING "4.8.2")
 elseif("${MAYA_VERSION}" STREQUAL "2015")
+    set(MAYA_QT_VERSION_SHORT  CACHE STRING "4.8")
+    set(MAYA_QT_VERSION_LONG  CACHE STRING "4.8.2")
+elseif("${MAYA_VERSION}" STREQUAL "2016")
     set(MAYA_QT_VERSION_SHORT  CACHE STRING "4.8")
     set(MAYA_QT_VERSION_LONG  CACHE STRING "4.8.2")
 endif()
