@@ -6,9 +6,9 @@
 *~
 *.o
 /*.kdev*
-*.cmake
+#*.cmake
 *.txt
-cmake_install.*
+#cmake_install.*
 *.make
 *.marks
 *.includecache
@@ -37,8 +37,8 @@ cmake_install.*
 *.cache
 *.build
 ._*
-CMakeScripts
-CMakeFiles
+#CMakeScripts
+#CMakeFiles
 /src/doc/*
 build-*
 _hide
@@ -46,3 +46,11 @@ sesitag.C
 *.so
 /win64/
 /linux64/
+
+*.vcxproj
+*.vcxproj.filters
+*.opensdf
+*.sdf
+*.sln
+*.exp
+build/py/Release/_partio.pyd
