@@ -48,7 +48,8 @@ Modifications from: github user: redpawfx (redpawFX@gmail.com)  and Luma Picture
 #include <string>
 #include <memory>
 
-namespace Partio{
+
+ENTER_PARTIO_NAMESPACE
 
 using namespace std;
 
@@ -73,22 +74,6 @@ typedef struct{
     float emitterScale[3];
 } BIN_HEADER;
 
-typedef struct{
-    int verificationCode;
-    char fluidName[250] ;
-    short version;
-    float scaleScene;
-    int fluidType;
-    float elapsedSimulationTime;
-    int frameNumber;
-    int framePerSecond;
-    int numParticles;
-    float radius;
-    float pressure[3];
-    float speed[3];
-    float temperature[3];
-} BIN_HEADERV6;
-
 
 ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
 
@@ -100,15 +85,7 @@ ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
     }
 
     BIN_HEADER header;
-    input->read((char*)&header, sizeof(BIN_HEADERV6));
-
-    // According to the NextLimit bin_particles_file_format.pdf file
-    if (header.version >= 7)
-    {
-        input->read((char*)&header.emitterPosition, sizeof(header.emitterPosition));
-        input->read((char*)&header.emitterRotation, sizeof(header.emitterRotation));
-        input->read((char*)&header.emitterScale, sizeof(header.emitterScale));
-    }
+    input->read((char*)&header, sizeof(header));
 
     if(BIN_MAGIC != header.verificationCode){
         cerr << "Partio: Magic number '" << hex<<  header.verificationCode << "' of '" << filename << "' doesn't match BIN magic '" << BIN_MAGIC << "'" << endl;
@@ -126,17 +103,13 @@ ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
     ParticleAttribute forceAttr;
     forceAttr = simple->addAttribute("force", VECTOR, 3);
     ParticleAttribute vortAttr;
-    if (header.version >= 9)
-        vortAttr = simple->addAttribute("vorticity", VECTOR, 3);
+    vortAttr = simple->addAttribute("vorticity", VECTOR, 3);
     ParticleAttribute normAttr;
-    if (header.version >= 3)
-        normAttr = simple->addAttribute("normal", VECTOR, 3);
+    normAttr = simple->addAttribute("normal", VECTOR, 3);
     ParticleAttribute neighborsAttr;
-    if (header.version >= 4)
-        neighborsAttr = simple->addAttribute("neighbors", INT, 1);
+    neighborsAttr = simple->addAttribute("neighbors", INT, 1);
     ParticleAttribute uvwAttr;
-    if (header.version >= 5)
-        uvwAttr = simple->addAttribute("uvw", VECTOR, 3);
+    uvwAttr = simple->addAttribute("uvw", VECTOR, 3);
     ParticleAttribute ageAttr;
     ageAttr = simple->addAttribute("age", FLOAT, 1);
     ParticleAttribute isoTimeAttr;
@@ -155,7 +128,7 @@ ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
     pidAttr = simple->addAttribute("id", INT, 1);
 
     if (!headersOnly)
-    {
+	{
         for(int partIndex = 0; partIndex < simple->numParticles(); partIndex++)
         {
 
@@ -200,44 +173,32 @@ ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
             input->read ((char *) &force[2], sizeof(float));
                 simple->dataWrite<float>(forceAttr, partIndex)[2] = (float)force[2];
 
-            if (header.version >= 9)
-            {
-                input->read ((char *) &vorticity[0], sizeof(float));
-                    simple->dataWrite<float>(vortAttr, partIndex)[0] = (float)vorticity[0];
-                input->read ((char *) &vorticity[1], sizeof(float));
-                    simple->dataWrite<float>(vortAttr, partIndex)[1] = (float)vorticity[1];
-                input->read ((char *) &vorticity[2], sizeof(float));
-                    simple->dataWrite<float>(vortAttr, partIndex)[2] = (float)vorticity[2];
-            }
+            input->read ((char *) &vorticity[0], sizeof(float));
+                simple->dataWrite<float>(vortAttr, partIndex)[0] = (float)vorticity[0];
+            input->read ((char *) &vorticity[1], sizeof(float));
+                simple->dataWrite<float>(vortAttr, partIndex)[1] = (float)vorticity[1];
+            input->read ((char *) &vorticity[2], sizeof(float));
+                simple->dataWrite<float>(vortAttr, partIndex)[2] = (float)vorticity[2];
 
-            if (header.version >= 3)
-            {
-                input->read ((char *) &normal[0], sizeof(float));
-                    simple->dataWrite<float>(normAttr, partIndex)[0] = (float)normal[0];
-                input->read ((char *) &normal[1], sizeof(float));
-                    simple->dataWrite<float>(normAttr, partIndex)[1] = (float)normal[1];
-                input->read ((char *) &normal[2], sizeof(float));
-                    simple->dataWrite<float>(normAttr, partIndex)[2] = (float)normal[2];
-                }
+            input->read ((char *) &normal[0], sizeof(float));
+                simple->dataWrite<float>(normAttr, partIndex)[0] = (float)normal[0];
+            input->read ((char *) &normal[1], sizeof(float));
+                simple->dataWrite<float>(normAttr, partIndex)[1] = (float)normal[1];
+            input->read ((char *) &normal[2], sizeof(float));
+                simple->dataWrite<float>(normAttr, partIndex)[2] = (float)normal[2];
 
-            if (header.version >= 4)
-            {
-                input->read ((char *) &neighbors, sizeof (int));
-                    simple->dataWrite<int>(neighborsAttr, partIndex)[0] = (int)neighbors;
-            }
 
-            if (header.version >= 5)
-            {
-                input->read ((char *) &uvw[0], sizeof(float));
-                    simple->dataWrite<float>(uvwAttr, partIndex)[0] = (float)uvw[0];
-                input->read ((char *) &uvw[1], sizeof(float));
-                    simple->dataWrite<float>(uvwAttr, partIndex)[1] = (float)uvw[1];
-                input->read ((char *) &uvw[2], sizeof(float));
-                    simple->dataWrite<float>(uvwAttr, partIndex)[2] = (float)uvw[2];
+            input->read ((char *) &neighbors, sizeof (int));
+                simple->dataWrite<int>(neighborsAttr, partIndex)[0] = (int)neighbors;
 
-                input->read ((char *) &infoBits, sizeof(infoBits));
-            }
+            input->read ((char *) &uvw[0], sizeof(float));
+                simple->dataWrite<float>(uvwAttr, partIndex)[0] = (float)uvw[0];
+            input->read ((char *) &uvw[1], sizeof(float));
+                simple->dataWrite<float>(uvwAttr, partIndex)[1] = (float)uvw[1];
+            input->read ((char *) &uvw[2], sizeof(float));
+                simple->dataWrite<float>(uvwAttr, partIndex)[2] = (float)uvw[2];
 
+            input->read ((char *) &infoBits, sizeof(infoBits));
             // don't  do anything with this..
             input->read ((char *) &age, sizeof(age));
                 simple->dataWrite<float>(ageAttr, partIndex)[0] = (float)age;
@@ -253,8 +214,6 @@ ParticlesDataMutable* readBIN(const char* filename, const bool headersOnly){
                 simple->dataWrite<float>(massAttr, partIndex)[0] = (float)mass;
             input->read ((char *) &temperature, sizeof(temperature));
                 simple->dataWrite<float>(tempAttr, partIndex)[0] = (float)temperature;
-
-            // pid
 			if (header.version < 12)
 			{
 				input->read ((char *) &pid, sizeof(pid));
@@ -529,4 +488,4 @@ bool writeBIN(const char* filename,const ParticlesData& p,const bool /*compresse
     return true;
 }
 
-}// end of namespace Partio
+EXIT_PARTIO_NAMESPACE

@@ -48,16 +48,16 @@ Some code for this format  was helped along  by referring to the official nextli
 #include <memory>
 
 
+ENTER_PARTIO_NAMESPACE
 
 typedef unsigned int uint;
 
-namespace Partio{
 
 using namespace std;
 
 static const long RPC_MAGIC = 0x70FABADA;
 
-typedef struct RPC_HEADER {
+typedef struct{
     int verificationCode;
     uint version; // current version = 3
 	uint numParticles;
@@ -291,5 +291,4 @@ bool writeRPC(const char* filename,const ParticlesData& p,const bool /*compresse
 	return true;
 }
 
-
-}// end of namespace Partio
+EXIT_PARTIO_NAMESPACE
