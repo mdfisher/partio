@@ -97,7 +97,16 @@ namespace {
             world_view_source[3][0] = position[0];
             world_view_source[3][1] = position[1];
             world_view_source[3][2] = position[2];
-            static __thread float world_view[4][4];
+
+//# ifdef _MSC_BUILD			
+			static __declspec(thread) float world_view[4][4];
+//# else
+			//static __thread float world_view[4][4];
+//# endif
+
+
+
+
             (world_view_source * world_view_matrix).get(world_view);
             world_view[0][0] = 1.0f;
             world_view[0][1] = 0.0f;
@@ -153,8 +162,10 @@ namespace {
 
         void draw_bounding_box() const
         {
-            const MPoint bboxMin = p_reader_cache->bbox.min();
-            const MPoint bboxMax = p_reader_cache->bbox.max();
+            const MPoint bboxMin = DrawData::p_reader_cache->bbox.min();
+			const MPoint bboxMax = DrawData::p_reader_cache->bbox.max();
+				
+				
 
             const float xMin = static_cast<float>(bboxMin.x);
             const float yMin = static_cast<float>(bboxMin.y);
